@@ -3,13 +3,24 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const nodemailer = require("nodemailer");
-const Blacklist = require('../models/Blacklist')
-const RefreshToken = require('../models/refereshToken')
+const validator = require('validator')
+const RefreshToken = require('../models/refereshToken');
+const BlackList = require("../models/Blacklist");
 require("dotenv").config();
 
 const SignUp = async (req, res) => {
   const { name, email, userName, password } = req.body;
+
   try {
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ msg: "Invalid email format" });
+    }
+    const passwordRegex = /^(?=.*[!@#$%^&*])(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{6,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        msg: "Password must contain at least 6 characters, including one letter, one number, and one special character.",
+      });
+    }
     let user = await User.findOne({ $or: [{ userName }, { email }] });
     if (user) {
       return res.status(400).json({ msg: "Username or Email already exists" });
@@ -36,10 +47,10 @@ const SignUp = async (req, res) => {
       expiresIn: "1h",
     });
 
-    res.status(201).json({ msg: "User is signed up successfully", token });
+    res.status(201).json({ message: "User is signed up successfully", token });
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -53,9 +64,9 @@ const transporter = nodemailer.createTransport({
 
 const sendSuccessEmail = async (email, name) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER, // Sender's email address
-    to: email, // Recipient's email address
-    subject: "Login Successful", // Email subject
+    from: process.env.EMAIL_USER, 
+    to: email, 
+    subject: "Login Successful", 
     text: `Hello ${name},\n\nYou have successfully logged in to your account.\n\nBest regards,\nYour Company`, // Email body
   };
 
@@ -72,11 +83,11 @@ const Login = async (req, res) => {
   try {
     let user = await User.findOne({ userName });
     if (!user) {
-      return res.status(400).json({ msg: "Invalid Credentials" });
+      return res.status(400).json({ message: "Invalid Credentials" });
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ msg: "User is not matched" });
+      return res.status(400).json({ message: "User is not matched" });
     }
     const payLoad = {
       user: {
@@ -109,14 +120,14 @@ const EditUser = async (req, res) => {
   const { id } = req.params;
 
   if (!id) {
-    return res.status(400).json({ msg: "User ID is required in the header" });
+    return res.status(400).json({ message: "User ID is required in the header" });
   }
 
   try {
     let user = await User.findById(id);
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     if (name) user.name = name;
@@ -128,10 +139,10 @@ const EditUser = async (req, res) => {
     }
 
     await user.save();
-    res.status(200).json({ msg: "User updated successfully" });
+    res.status(200).json({ message: "User updated successfully" });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ msg: "Error updating the user" });
+    res.status(500).json({ message: "Error updating the user" });
   }
 };
 
@@ -140,11 +151,11 @@ const DeleteUser = async (req, res) => {
   try {
     const result = await User.findByIdAndDelete(id);
     if (!result) {
-      return res.status(404).send({ msg: "User not found" });
+      return res.status(404).send({ message: "User not found" });
     }
-    res.status(200).send({ msg: "User deleted Successfuly" });
+    res.status(200).send({ message: "User deleted Successfuly" });
   } catch (error) {
-    res.status(500).json({ msg: "Error Deleting the User " });
+    res.status(500).json({ message: "Error Deleting the User " });
   }
 };
 
@@ -154,13 +165,13 @@ const viewTeamProfile = async(req, res) => {
     const user = await User.findById(userId);
 
     if(user.role !=='Manager'){
-      return res.status(403).josn({msg:"Access forbidden only managers can view it "})
+      return res.status(403).josn({message:"Access forbidden only managers can view it "})
     }
     const teamProfiles = await User.find({teamId: user.teamId});
     res.status(200).json({teamProfiles})
   } catch (error) {
     console.error('View Team Priofiles error',error.message)
-    res.status(500).json({msg:"Server Error"})
+    res.status(500).json({message:"Server Error"})
     
   }
 
@@ -172,7 +183,7 @@ const Logout = async (req, res) => {
     const refreshToken = req.body.refreshToken;
 
     if (!token) {
-      return res.status(400).json({ msg: "Access token not provided" });
+      return res.status(400).json({ message: "Access token not provided" });
     }
 
     const blacklistedToken = new BlackList({ token });
@@ -182,10 +193,10 @@ const Logout = async (req, res) => {
       await RefreshToken.findOneAndDelete({ token: refreshToken });
     }
 
-    res.status(200).json({ msg: "Logged out successfully" });
+    res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout Error:", error.message);
-    res.status(500).json({ msg: "Server error during logout" });
+    res.status(500).json({ message: "Server error during logout" });
   }
 };
 module.exports = { SignUp, Login, DeleteUser, EditUser, Logout ,viewTeamProfile};

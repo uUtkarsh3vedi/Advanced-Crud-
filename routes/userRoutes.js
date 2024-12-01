@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+const adminLimiter = require('../middlewares/rateMiddleware')
+const managerLimiter = require('../middlewares/rateMiddleware')
+const userLimiter = require('../middlewares/rateMiddleware')
 const {
   SignUp,
   Login,
@@ -16,6 +19,7 @@ router.get(
   "/admin-dashboard",
   authenticate,
   checkRole(["Admin"]),
+   adminLimiter,
   (req, res) => {
     res.send("Welcome to dashboard");
   }
@@ -24,11 +28,12 @@ router.get(
   "/manager-tasks",
   authenticate,
   checkRole(["Manager"]),
+  managerLimiter,
   (req, res) => {
     res.send("Welcome to manager task dashboard");
   }
 );
-router.get("/user-profile", authenticate, checkRole(["User"]), (req, res) => {
+router.get("/user-profile", authenticate, checkRole(["User"]), userLimiter, (req, res) => {
   res.send("Welcome to User dashboard");
 });
 

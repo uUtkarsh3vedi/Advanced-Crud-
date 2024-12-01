@@ -5,12 +5,12 @@ const checkRole = (roles) => {
       try {
         const userRole = req.user.role;
         if (!roles.includes(userRole)) {
-          return res.status(403).json({ msg: "Access forbidden: Insufficient permissions" });
+          return res.status(403).json({ message: "Access forbidden: Insufficient permissions" });
         }
         next(); 
       } catch (error) {
         console.error('Role Middleware Error:', error.message);
-        res.status(500).json({ msg: "Server error" });
+        res.status(500).json({ message: "Server error" });
       }
     };
   };

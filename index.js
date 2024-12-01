@@ -1,17 +1,15 @@
-const express = require('express');
-const userRoutes= require('./routes/userRoutes')
-const taskRoutes = require('./routes/taskRoutes')
+const express = require("express");
 const app = express();
-const mongoose = require('mongoose')
-const connection = require('./database/db')
+const connection = require("./database/db");
+const routes = require("./routes/routes");
 const PORT = 8000;
 
-app.use(express.json())
-app.use("/user",userRoutes)
-app.use("/tasks",taskRoutes)
+app.use(express.json());
 
-connection()
+app.use(routes);
+
+connection();
 
 app.listen(PORT, () => {
-    console.log(`server is running at ${PORT}`);
+  console.log(`server is running at ${PORT}`);
 });
